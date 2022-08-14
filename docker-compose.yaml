@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  db:
+    image: postgres
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    networks:
+      - backendnet
+      
+  quizzle-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://quizzle-backend/ping"]
+    networks:
+      - backendnet
+    links:
+      - db
+    depends_on:
+      - db
+networks:
+  backendnet:
+    name: backend_network
