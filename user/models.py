@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import CASCADE
-from django.contrib.auth.models import User, AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.utils import timezone  
 
 
@@ -35,10 +35,6 @@ class CustomUserManager(BaseUserManager):
         return user
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLES = (
-        (1, "Setter"),
-        (2, "Reviewer"),
-    )
 
     email = models.EmailField(max_length=255, unique=True)
     username = models.CharField(max_length=255, unique=True)
@@ -49,7 +45,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_admin = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)  
     # extra fields
-    role = models.IntegerField(choices=ROLES, default=1)
+    is_setter = models.BooleanField()
+    is_reviewer = models.BooleanField()
     questions_submitted = models.IntegerField(default=0)
     questions_accepted = models.IntegerField(default=0)
     questions_reviewed = models.IntegerField(default=0)
@@ -69,7 +66,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username", "first_name", "last_name"]
+    REQUIRED_FIELDS = ["username", "first_name", "last_name", "is_setter", "is_reviewer"]
 
     def __str__(self):
         return str(self.email) + str(self.role)
