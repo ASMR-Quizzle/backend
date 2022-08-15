@@ -19,6 +19,6 @@ class QuestionViewSet(viewsets.ModelViewSet):
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data)
         elif user.is_reviewer:
-            queryset = self.queryset.all().exclude(setter=user)
+            queryset = self.queryset.exclude(setter=user)
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data)
