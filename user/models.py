@@ -18,9 +18,10 @@ class Reward(models.Model):
 class AppUser(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=CASCADE)
     email = models.EmailField(max_length=255, unique=True)
+    password = models.CharField(max_length=64, blank=True, null=True)
     username = models.CharField(max_length=255, unique=True)
-    is_setter = models.BooleanField()
-    is_reviewer = models.BooleanField()
+    is_setter = models.BooleanField(default=False)
+    is_reviewer = models.BooleanField(default=False)
     questions_submitted = models.IntegerField(default=0)
     questions_accepted = models.IntegerField(default=0)
     questions_reviewed = models.IntegerField(default=0)

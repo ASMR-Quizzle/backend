@@ -1,7 +1,8 @@
 from django.urls import path, include
 
+from .views import UserRegistrationAPI
+
 
 urlpatterns = [
-    path("auth/", include("djoser.urls")),
-    path("auth/", include("djoser.urls.jwt")),
+    path("register", UserRegistrationAPI.as_view(), name="user-register"),
 ]

@@ -34,10 +34,10 @@ class Question(models.Model):
     C = models.TextField()
     D = models.TextField()
     answer = models.CharField(max_length=1, choices=ANSWER_CHOICES)
-    difficulty_score = models.FloatField()
-    acceptance_score = models.FloatField()
-    is_accepted = models.BooleanField()
-    usage_score = models.IntegerField()
+    difficulty_score = models.FloatField(default=0)
+    acceptance_score = models.FloatField(default=0)
+    is_accepted = models.BooleanField(default=False)
+    usage_score = models.IntegerField(default=0)
     topic = models.ForeignKey(Topic, blank=False, null=False, on_delete=CASCADE)
 
     class Meta:
@@ -47,14 +47,19 @@ class Question(models.Model):
     def __str__(self):
         return self.question
 
+    # def checkSetterReviewer():
+
 
 class UserEligibilityTest(models.Model):
     TEST_TYPE_CHOICES = (("SETTER", "SETTER"), ("REVIEWER", "REVIEWER"))
     appuser = models.ForeignKey(AppUser, null=False, blank=False, on_delete=CASCADE)
     topic = models.ForeignKey(Topic, blank=False, null=False, on_delete=CASCADE)
-    test_score = models.CharField(
+    test_type = models.CharField(
         max_length=20, choices=TEST_TYPE_CHOICES, default="SETTER"
     )
     score = models.IntegerField(default=0)
-    max_score = models.IntegerField()
+    max_score = models.IntegerField(default=100)
     is_eligible = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.appuser.username + "_" + self.topic.name + "_" + self.test_type
