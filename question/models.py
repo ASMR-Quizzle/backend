@@ -1,8 +1,7 @@
 from django.db import models
 from django.db.models import CASCADE
-from django.contrib.auth import get_user_model
+from user.models import AppUser
 
-User = get_user_model()
 
 class Topic(models.Model):
     class Meta:
@@ -24,10 +23,10 @@ class Question(models.Model):
         ("D", "D"),
     )
     setter = models.ForeignKey(
-        User, blank=False, null=False, on_delete=CASCADE, related_name="setter"
+        AppUser, blank=False, null=False, on_delete=CASCADE, related_name="setter"
     )
     reviewer = models.ForeignKey(
-        User, blank=True, null=True, on_delete=CASCADE, related_name="reviewer"
+        AppUser, blank=True, null=True, on_delete=CASCADE, related_name="reviewer"
     )
     question = models.TextField()
     A = models.TextField()
@@ -46,15 +45,12 @@ class Question(models.Model):
         verbose_name_plural = "Questions"
 
     def __str__(self):
-        return self.name
+        return self.question
 
 
 class UserEligibilityTest(models.Model):
-    TEST_TYPE_CHOICES = (
-        ("SETTER", "SETTER"), 
-        ("REVIEWER", "REVIEWER")
-    )
-    appuser = models.ForeignKey(User, null=False, blank=False, on_delete=CASCADE)
+    TEST_TYPE_CHOICES = (("SETTER", "SETTER"), ("REVIEWER", "REVIEWER"))
+    appuser = models.ForeignKey(AppUser, null=False, blank=False, on_delete=CASCADE)
     topic = models.ForeignKey(Topic, blank=False, null=False, on_delete=CASCADE)
     test_score = models.CharField(
         max_length=20, choices=TEST_TYPE_CHOICES, default="SETTER"
