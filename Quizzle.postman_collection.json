@@ -1,0 +1,288 @@
+{
+	"info": {
+		"_postman_id": "41666d80-6525-4e2d-8194-153fc73f2550",
+		"name": "Quizzle",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\":\"user-1\",\n    \"password\":\"user-1-p\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/auth/users/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"auth",
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Activate",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\":\"user-1\",\n    \"password\":\"user-1-p\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/auth/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Set",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODQ2NTAwLCJqdGkiOiI0MTJkNzdkNzJhMGI0N2M5YmY0YzJmY2ZiOGVkNjk3YSIsInVzZXJfaWQiOjR9.xvG-6SeZBl71OC348OCRznKDuWntN27AlDNIn4V1sCk",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"question\":\"question-2\",\n    \"A\":\"A-2\",\n    \"B\":\"B-2\",\n    \"C\":\"C-2\",\n    \"D\":\"D-2\",\n    \"answer\":\"B\",\n    \"difficulty\":60.5,\n    \"topic\":\"chemistry\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/question/set",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"question",
+						"set"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UET",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODQ2NTg3LCJqdGkiOiI5ZDQ4NGQ3ZTBmYTE0NjYxYmYzZmZjMzdjMjA1NzUyYyIsInVzZXJfaWQiOjN9.1-aBhuk6r5Qq4lxssQHXT69TAD0AK6y-6bbfla7aqHA",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"test_type\":\"REVIEWER\",\n    \"score\":45,\n    \"max_score\":77,\n    \"topic\":\"chemistry\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/question/uet",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"question",
+						"uet"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "My Questions",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODM3MDQ1LCJqdGkiOiIyOWI5MjUzZWJmYmI0YTJlODFmNDRjMzM2YjQ2ODE4ZSIsInVzZXJfaWQiOjN9.Ck9IOUFZc1DjQyOz6pi-LzoyYRgAm7S3em2X_UXBs34",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/question/set",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"question",
+						"set"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Review",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODM3MDQ1LCJqdGkiOiIyOWI5MjUzZWJmYmI0YTJlODFmNDRjMzM2YjQ2ODE4ZSIsInVzZXJfaWQiOjN9.Ck9IOUFZc1DjQyOz6pi-LzoyYRgAm7S3em2X_UXBs34",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/question/review",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"question",
+						"review"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Review",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODM3MDQ1LCJqdGkiOiIyOWI5MjUzZWJmYmI0YTJlODFmNDRjMzM2YjQ2ODE4ZSIsInVzZXJfaWQiOjN9.Ck9IOUFZc1DjQyOz6pi-LzoyYRgAm7S3em2X_UXBs34",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"topic_id\":\"3\",\n    \"id\":\"7\",\n    \"acceptance_score\":34.4,\n    \"difficulty_score\":44.5\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/question/review",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"question",
+						"review"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"user-3@email.com\",\n    \"username\": \"user-3\",\n    \"is_setter\": false,\n    \"is_reviewer\": false,\n    \"is_active\": false,\n    \"password\": \"user-3-p\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/user/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"register"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
