@@ -29,10 +29,10 @@ class Question(models.Model):
         AppUser, blank=True, null=True, on_delete=CASCADE, related_name="reviewer"
     )
     question = models.TextField()
-    A = models.TextField()
-    B = models.TextField()
-    C = models.TextField()
-    D = models.TextField()
+    A = models.TextField(null=False, blank=False)
+    B = models.TextField(null=False, blank=False)
+    C = models.TextField(null=True, blank=True)
+    D = models.TextField(null=True, blank=True)
     answer = models.CharField(max_length=1, choices=ANSWER_CHOICES)
     difficulty_score = models.FloatField(default=0)
     acceptance_score = models.FloatField(default=0)
@@ -46,8 +46,6 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question
-
-    # def checkSetterReviewer():
 
 
 class UserEligibilityTest(models.Model):

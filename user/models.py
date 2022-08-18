@@ -12,7 +12,7 @@ class Reward(models.Model):
         verbose_name_plural = "Rewards"
 
     def __str__(self):
-        return self.name
+        return self.appuser.username + "_" + self.wallet_address
 
 
 class AppUser(models.Model):

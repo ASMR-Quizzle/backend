@@ -1,4 +1,3 @@
-from urllib import response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
@@ -123,6 +122,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
         questions = (
             Question.objects.all()
             .exclude(setter=appUser)
+            .exclude(reviewer=appUser)
             .filter(is_accepted=False)
             .filter(topic_id__in=topic_list)
             .values()
@@ -153,6 +153,10 @@ class ReviewQuestionAPI(generics.GenericAPIView):
         question.topic = topic
         question.reviewer = appUser
         question.save()
+        setter = question.setter
+        if setter.reward is not None and question.is_accepted:
+            setter.reward.points += 8.5
+            setter.reward.save()
         return Response(
             {
                 "message": "question reviewed successfully",
