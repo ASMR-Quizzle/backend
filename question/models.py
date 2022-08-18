@@ -42,7 +42,7 @@ class Question(models.Model):
     acceptance_score = models.FloatField(default=0)
     is_accepted = models.BooleanField(default=False)
     usage_score = models.IntegerField(default=0)
-    topic = models.ForeignKey(Topic, blank=False, null=False, on_delete=CASCADE)
+    topics = models.ManyToManyField(Topic)
     reviews = models.IntegerField(default=0)
     status = models.CharField(
         max_length=256, choices=STATUS_CHOICES, default="NOT REVIEWED"

@@ -27,7 +27,11 @@ class SetQuestionAPI(generics.GenericAPIView):
             reviewers = questions_queryset[i].reviewers.all()
             for reviewer in reviewers:
                 reviewer_list.append(reviewer.username)
-            questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
+            topic_list = []
+            topics = questions_queryset[i].topics.all()
+            for topic in topics:
+                topic_list.append(topic.name)
+            questions[i]["topics"] = topic_list
             questions[i]["reviewers"] = reviewer_list
         return Response({"data": questions})
 
@@ -36,23 +40,28 @@ class SetQuestionAPI(generics.GenericAPIView):
         appUser = user.appuser
         if appUser.is_setter == False:
             return Response(status=400, data={"error": "user not a question setter"})
-        if not Topic.objects.filter(name=request.data["topic"]).exists():
-            return Response(
-                status=404,
-                data={"error": f"Topic '{request.data['topic']}' does not exist"},
+        topics = request.data["topics"]
+        topics_queryset = []
+        for topic in topics:
+            if not Topic.objects.filter(name=topic).exists():
+                return Response(
+                    status=404,
+                    data={"error": f"Topic '{request.data['topic']}' does not exist"},
+                )
+            else:
+                topics_queryset.append(Topic.objects.get(name=topic))
+        for topic in topics_queryset:
+            uet = UserEligibilityTest.objects.all().filter(
+                topic=topic, appuser=appUser, test_type="SETTER", is_eligible=True
             )
-        topic = Topic.objects.get(name=request.data["topic"])
+            if len(uet) == 0:
+                return Response(
+                    status=400,
+                    data={
+                        "error": f"user not eligible to set questions for topic: {topic.name}"
+                    },
+                )
 
-        uet = UserEligibilityTest.objects.all().filter(
-            topic=topic, appuser=appUser, test_type="SETTER", is_eligible=True
-        )
-        if len(uet) == 0:
-            return Response(
-                status=400,
-                data={
-                    "error": f"user not eligible to set questions for topic: {topic.name}"
-                },
-            )
         content = request.data["question"]
         A = request.data["A"]
         B = request.data["B"]
@@ -69,10 +78,12 @@ class SetQuestionAPI(generics.GenericAPIView):
             D=D,
             answer=answer,
             difficulty_score=difficulty_score,
-            topic=topic,
         )
-        topic.question_count += 1
-        topic.save()
+        question.save()
+        for topic in topics_queryset:
+            topic.question_count += 1
+            topic.save()
+            question.topics.add(topic)
         question.save()
         return Response({"message": "Quesiton created successfully"})
 
@@ -116,7 +127,11 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
             return Response(
                 {
                     "message": "UET Report Updated Successfully",
-                    "data": {"is_eligible": is_eligible, "topic": topic.name},
+                    "data": {
+                        "is_eligible": is_eligible,
+                        "topic": topic.name,
+                        "test_type": test_type,
+                    },
                 }
             )
         else:
@@ -132,7 +147,11 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
         return Response(
             {
                 "message": "UET Report Generated Successfully",
-                "data": {"is_eligible": is_eligible},
+                "data": {
+                    "is_eligible": is_eligible,
+                    "topic": topic.name,
+                    "test_type": test_type,
+                },
             }
         )
 
@@ -150,10 +169,8 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             appuser=appUser, test_type="REVIEWER", is_eligible=True
         ).values()
         topic_list = []
-        topic_id_list = []
         for i in range(len(uet_eligible)):
             topic_list.append(Topic.objects.get(pk=uet_eligible[i]["topic_id"]))
-            topic_id_list.append(uet_eligible[i]["topic_id"])
 
         # temporary arrangement
         questions_queryset = (
@@ -162,7 +179,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             .exclude(reviewers__in=[appUser])
             .exclude(reviews=3)
             .filter(is_accepted=False)
-            .filter(topic_id__in=topic_list)
+            .filter(topics__in=topic_list)
         )
         questions = questions_queryset.values()
 
@@ -171,7 +188,12 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             reviewers = questions_queryset[i].reviewers.all()
             for reviewer in reviewers:
                 reviewer_list.append(reviewer.username)
-            questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
+            topic_list = []
+            topics = questions_queryset[i].topics.all()
+            for topic in topics:
+                topic_list.append(topic.name)
+            questions[i]["topics"] = topic_list
+            # questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
             questions[i]["reviewers"] = reviewer_list
         return Response({"data": questions})
 
@@ -180,25 +202,25 @@ class ReviewQuestionAPI(generics.GenericAPIView):
         appUser = user.appuser
         if appUser.is_reviewer == False:
             return Response(status=400, data={"error": "user not a question reviewer"})
-        topic_id = request.data["topic_id"]
         question_id = request.data["id"]
-        if not Topic.objects.filter(pk=request.data["topic_id"]).exists():
-            return Response(
-                status=404,
-                data={
-                    "error": f"Topic with id '{request.data['topic_id']}' does not exist"
-                },
-            )
-        topic = Topic.objects.get(pk=topic_id)
-        if not UserEligibilityTest.objects.filter(
-            topic=topic,
-            appuser=appUser,
-            test_type="REVIEWER",
-        ).exists():
-            return Response(
-                status=400, data={"error": "User not eligible to review this question"}
-            )
         question = Question.objects.get(pk=question_id)
+        for reviewer in question.reviewers.all():
+            if appUser.username == reviewer.username:
+                return Response(
+                    data={"error": "user has already reviewed this question"},
+                    status=400,
+                )
+        topics = question.topics.all()
+        for topic in topics:
+            if not UserEligibilityTest.objects.filter(
+                topic__in=topics,
+                appuser=appUser,
+                test_type="REVIEWER",
+            ).exists():
+                return Response(
+                    status=400,
+                    data={"error": "User not eligible to review this question"},
+                )
         question.status = "UNDER REVIEW"
         if question.reviews >= 3:
             return Response(

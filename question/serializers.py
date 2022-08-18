@@ -11,7 +11,7 @@ class SetQuestionSerializer(serializers.Serializer):
     D = serializers.CharField()
     answer = serializers.CharField()
     difficulty_score = serializers.FloatField()
-    topic = serializers.CharField()
+    topics = serializers.CharField()
 
 
 class UserEligibilityTestSerializer(serializers.Serializer):
