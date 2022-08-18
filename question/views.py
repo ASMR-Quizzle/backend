@@ -18,7 +18,7 @@ class SetQuestionAPI(generics.GenericAPIView):
         user = request.user
         appUser = user.appuser
         if appUser.is_setter == False:
-            return Response({"error": "user not a question setter"})
+            return Response(status=400, data={"error": "user not a question setter"})
         questions = Question.objects.all().filter(setter=appUser).values()
         for i in range(len(questions)):
             questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
@@ -28,14 +28,17 @@ class SetQuestionAPI(generics.GenericAPIView):
         user = request.user
         appUser = user.appuser
         if appUser.is_setter == False:
-            return Response({"error": "user not a question setter"})
+            return Response(status=400, data={"error": "user not a question setter"})
         topic = Topic.objects.get(name=request.data["topic"])
         uet = UserEligibilityTest.objects.all().filter(
             topic=topic, appuser=appUser, test_type="SETTER", is_eligible=True
         )
         if len(uet) == 0:
             return Response(
-                {"error": f"user not eligible to set questions for topic: {topic.name}"}
+                status=400,
+                data={
+                    "error": f"user not eligible to set questions for topic: {topic.name}"
+                },
             )
         content = request.data["question"]
         A = request.data["A"]
@@ -67,10 +70,10 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
         user = request.user
         appUser = user.appuser
         if appUser.is_setter == False and request.data["test_type"] == "SETTER":
-            return Response({"error": "user not a question setter"})
+            return Response(status=400, data={"error": "user not a question setter"})
 
         if appUser.is_reviewer == False and request.data["test_type"] == "REVIEWER":
-            return Response({"error": "user not a question reviewer"})
+            return Response(status=400, data={"error": "user not a question reviewer"})
         test_type = request.data["test_type"]
         topic = Topic.objects.get(name=request.data["topic"])
         score = request.data["score"]
@@ -118,7 +121,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
         user = request.user
         appUser = user.appuser
         if appUser.is_reviewer == False:
-            return Response({"error": "user not a question reviewer"})
+            return Response(status=400, data={"error": "user not a question reviewer"})
         uet_eligible = UserEligibilityTest.objects.filter(
             appuser=appUser, test_type="REVIEWER", is_eligible=True
         ).values()
@@ -145,7 +148,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
         user = request.user
         appUser = user.appuser
         if appUser.is_reviewer == False:
-            return Response({"error": "user not a question reviewer"})
+            return Response(status=400, data={"error": "user not a question reviewer"})
         topic_id = request.data["topic_id"]
         question_id = request.data["id"]
         topic = Topic.objects.get(pk=topic_id)
@@ -154,7 +157,9 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             appuser=appUser,
             test_type="REVIEWER",
         ).exists():
-            return Response({"error": "User Not Eligible to Review this question"})
+            return Response(
+                status=400, data={"error": "User not eligible to Review this question"}
+            )
         question = Question.objects.get(pk=question_id)
         question.difficulty_score = request.data["difficulty_score"]
         question.acceptance_score = request.data["acceptance_score"]

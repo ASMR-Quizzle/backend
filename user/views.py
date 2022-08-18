@@ -1,3 +1,4 @@
+from os import stat
 from .serializers import (
     CreateUserProfileSerializer,
     RewardsSerializer,
@@ -29,23 +30,31 @@ class RewardsAPI(generics.GenericAPIView):
         user = request.user
         appUser = user.appuser
         if appUser.is_reviewer == False and appUser.is_setter == False:
-            return Response({"error": "user not a eligible for rewards"})
+            return Response(
+                status=403, data={"error": "user not a eligible for rewards"}
+            )
         reward = appUser.reward
         if reward is None:
-            return Response({"error": "No wallet associated with current user"})
-        print(reward)
-        return Response({"data": reward})
+            return Response(
+                status=404, data={"error": "No wallet associated with current user"}
+            )
+        return Response(
+            {"data": {"address": reward.wallet_address, "points": reward.points}}
+        )
 
     def post(self, request, *args, **kwargs):
         user = request.user
         appUser = user.appuser
 
         if appUser.is_reviewer == False and appUser.is_setter == False:
-            return Response({"error": "user not a eligible for rewards"})
+            return Response(
+                status=406, data={"error": "user not a eligible for rewards"}
+            )
         reward = appUser.reward
         if reward is not None:
             return Response(
-                {"error": "user already has a wallet associated with the account"}
+                status=409,
+                data={"error": "user already has a wallet associated with the account"},
             )
         wallet_address = request.data["wallet_address"]
         reward = Reward(wallet_address=wallet_address)
