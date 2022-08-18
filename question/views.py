@@ -5,11 +5,12 @@ from rest_framework.response import Response
 from .serializers import (
     ReviewQuestionSerializer,
     SetQuestionSerializer,
+    TopicSerializer,
     UserEligibilityTestSerializer,
 )
 from .models import Question, Topic, UserEligibilityTest
 
-# Create your views here.
+
 class SetQuestionAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = SetQuestionSerializer
@@ -28,7 +29,6 @@ class SetQuestionAPI(generics.GenericAPIView):
                 reviewer_list.append(reviewer.username)
             questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
             questions[i]["reviewers"] = reviewer_list
-
         return Response({"data": questions})
 
     def post(self, request, *args, **kwargs):
@@ -36,7 +36,13 @@ class SetQuestionAPI(generics.GenericAPIView):
         appUser = user.appuser
         if appUser.is_setter == False:
             return Response(status=400, data={"error": "user not a question setter"})
+        if not Topic.objects.filter(name=request.data["topic"]).exists():
+            return Response(
+                status=404,
+                data={"error": f"Topic '{request.data['topic']}' does not exist"},
+            )
         topic = Topic.objects.get(name=request.data["topic"])
+
         uet = UserEligibilityTest.objects.all().filter(
             topic=topic, appuser=appUser, test_type="SETTER", is_eligible=True
         )
@@ -65,6 +71,8 @@ class SetQuestionAPI(generics.GenericAPIView):
             difficulty_score=difficulty_score,
             topic=topic,
         )
+        topic.question_count += 1
+        topic.save()
         question.save()
         return Response({"message": "Quesiton created successfully"})
 
@@ -76,15 +84,24 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         user = request.user
         appUser = user.appuser
+        test_type = request.data["test_type"]
+        score = request.data["score"]
+        max_score = request.data["max_score"]
+
         if appUser.is_setter == False and request.data["test_type"] == "SETTER":
             return Response(status=400, data={"error": "user not a question setter"})
 
         if appUser.is_reviewer == False and request.data["test_type"] == "REVIEWER":
-            return Response(status=400, data={"error": "user not a question reviewer"})
-        test_type = request.data["test_type"]
+            return Response(
+                status=400, data={"error": "user is not a question reviewer"}
+            )
+
+        if not Topic.objects.filter(name=request.data["topic"]).exists():
+            return Response(
+                status=404,
+                data={"error": f"Topic '{request.data['topic']}' does not exist"},
+            )
         topic = Topic.objects.get(name=request.data["topic"])
-        score = request.data["score"]
-        max_score = request.data["max_score"]
         is_eligible = score >= 35
         if UserEligibilityTest.objects.filter(
             topic=topic, appuser=appUser, test_type=test_type
@@ -99,7 +116,7 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
             return Response(
                 {
                     "message": "UET Report Updated Successfully",
-                    "data": {"is_eligible": is_eligible},
+                    "data": {"is_eligible": is_eligible, "topic": topic.name},
                 }
             )
         else:
@@ -165,6 +182,13 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             return Response(status=400, data={"error": "user not a question reviewer"})
         topic_id = request.data["topic_id"]
         question_id = request.data["id"]
+        if not Topic.objects.filter(pk=request.data["topic_id"]).exists():
+            return Response(
+                status=404,
+                data={
+                    "error": f"Topic with id '{request.data['topic_id']}' does not exist"
+                },
+            )
         topic = Topic.objects.get(pk=topic_id)
         if not UserEligibilityTest.objects.filter(
             topic=topic,
@@ -172,7 +196,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             test_type="REVIEWER",
         ).exists():
             return Response(
-                status=400, data={"error": "User not eligible to Review this question"}
+                status=400, data={"error": "User not eligible to review this question"}
             )
         question = Question.objects.get(pk=question_id)
         question.status = "UNDER REVIEW"
@@ -212,7 +236,10 @@ class ReviewQuestionAPI(generics.GenericAPIView):
                 setter.reward.save()
             else:
                 question.status = "REJECTED"
-
+        else:
+            reviewers = question.reviewers.all()
+            for reviewer in reviewers:
+                reviewer_list.append(reviewer.username)
         question.save()
         return Response(
             {
@@ -224,3 +251,11 @@ class ReviewQuestionAPI(generics.GenericAPIView):
                 "status": question.status,
             }
         )
+
+
+class TopicsAPI(generics.GenericAPIView):
+    serializer_class = TopicSerializer
+
+    def get(self, request, *args, **kwargs):
+        topics = Topic.objects.all().values()
+        return Response(data={"data": topics})

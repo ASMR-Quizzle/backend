@@ -10,11 +10,9 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
         fields = (
             "email",
             "username",
-            "is_setter",
-            "is_reviewer",
-            "is_active",
+            "first_name",
+            "last_name",
             "password",
-            "phone_number",
         )
         extra_kwargs = {
             "password": {"write_only": True},
@@ -24,6 +22,8 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
         user = User.objects.create(
             username=validated_data["username"],
             email=validated_data["email"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
         )
         user.set_password(validated_data["password"])
         user.save()
@@ -31,10 +31,9 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
             user=user,
             username=validated_data["username"],
             email=validated_data["email"],
-            is_setter=validated_data["is_setter"],
-            is_reviewer=validated_data["is_reviewer"],
-            phone_number=validated_data["phone_number"],
-            is_active=False,
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
+            is_active=True,
         )
         user_profile.save()
         return user
@@ -42,3 +41,7 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
 
 class RewardsSerializer(serializers.Serializer):
     wallet_address = serializers.CharField()
+
+
+class UserEligibleTopicsSerializer(serializers.Serializer):
+    pass

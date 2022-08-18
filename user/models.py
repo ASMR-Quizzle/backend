@@ -21,6 +21,8 @@ class AppUser(models.Model):
     email = models.EmailField(max_length=255, unique=True)
     password = models.CharField(max_length=64, blank=True, null=True)
     username = models.CharField(max_length=255, unique=True)
+    first_name = models.CharField(max_length=256, blank=True, null=True)
+    last_name = models.CharField(max_length=256, blank=True, null=True)
     is_setter = models.BooleanField(default=False)
     is_reviewer = models.BooleanField(default=False)
     questions_submitted = models.IntegerField(default=0)

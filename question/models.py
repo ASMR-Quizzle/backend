@@ -31,10 +31,7 @@ class Question(models.Model):
     setter = models.ForeignKey(
         AppUser, blank=False, null=False, on_delete=CASCADE, related_name="setter"
     )
-    # reviewer = models.ForeignKey(
-    #     AppUser, blank=True, null=True, on_delete=CASCADE, related_name="reviewer"
-    # )
-    reviewers = models.ManyToManyField(AppUser, related_name="reviewer")
+    reviewers = models.ManyToManyField(AppUser, related_name="reviewer", blank=True)
     question = models.TextField()
     A = models.TextField(null=False, blank=False)
     B = models.TextField(null=False, blank=False)

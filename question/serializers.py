@@ -26,3 +26,7 @@ class ReviewQuestionSerializer(serializers.Serializer):
     acceptance_score = serializers.FloatField()
     id = serializers.CharField()
     topic_id = serializers.CharField()
+
+
+class TopicSerializer(serializers.Serializer):
+    pass

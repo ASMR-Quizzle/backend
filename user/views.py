@@ -1,7 +1,10 @@
 from os import stat
+
+from question.models import Topic, UserEligibilityTest
 from .serializers import (
     CreateUserProfileSerializer,
     RewardsSerializer,
+    UserEligibleTopicsSerializer,
 )
 from rest_framework import generics
 from rest_framework.response import Response
@@ -67,3 +70,21 @@ class RewardsAPI(generics.GenericAPIView):
                 "message": "Wallet Connected to Quizzle successfully",
             }
         )
+
+
+class UserEligibleTopicsAPI(generics.GenericAPIView):
+    serializer_class = UserEligibleTopicsSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        if (
+            request.user.appuser.is_setter == False
+            and request.user.appuser.is_reviewer == False
+        ):
+            return Response(
+                data={"error": "User is neither a setter nor a reviewer"}, status=400
+            )
+        topics = UserEligibilityTest.objects.filter(
+            appuser=request.user.appuser, is_eligible=True
+        ).values()
+        return Response(data={"data": topics})
