@@ -36,3 +36,7 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
         )
         user_profile.save()
         return user
+
+
+class RewardsSerializer(serializers.Serializer):
+    wallet_address = serializers.CharField()

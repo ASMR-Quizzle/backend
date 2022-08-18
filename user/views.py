@@ -1,5 +1,6 @@
 from .serializers import (
     CreateUserProfileSerializer,
+    RewardsSerializer,
 )
 from rest_framework import generics
 from rest_framework.response import Response
@@ -22,6 +23,7 @@ class UserRegistrationAPI(generics.GenericAPIView):
 
 class RewardsAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = RewardsSerializer
 
     def get(self, request, *args, **kwargs):
         user = request.user

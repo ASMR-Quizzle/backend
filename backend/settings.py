@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     # "djoser",
     "question.apps.QuestionConfig",
     "user.apps.UserConfig",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [

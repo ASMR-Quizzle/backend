@@ -1,11 +1,18 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
+
+from .serializers import (
+    ReviewQuestionSerializer,
+    SetQuestionSerializer,
+    UserEligibilityTestSerializer,
+)
 from .models import Question, Topic, UserEligibilityTest
 
 # Create your views here.
 class SetQuestionAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = SetQuestionSerializer
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -36,7 +43,7 @@ class SetQuestionAPI(generics.GenericAPIView):
         C = request.data["C"]
         D = request.data["D"]
         answer = request.data["answer"]
-        difficulty_score = request.data["difficulty"]
+        difficulty_score = request.data["difficulty_score"]
         question = Question(
             setter=appUser,
             question=content,
@@ -54,6 +61,7 @@ class SetQuestionAPI(generics.GenericAPIView):
 
 class UserEligibilityTestAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = UserEligibilityTestSerializer
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -104,6 +112,7 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
 
 class ReviewQuestionAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = ReviewQuestionSerializer
 
     def get(self, request, *args, **kwargs):
         user = request.user
