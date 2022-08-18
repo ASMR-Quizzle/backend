@@ -19,9 +19,16 @@ class SetQuestionAPI(generics.GenericAPIView):
         appUser = user.appuser
         if appUser.is_setter == False:
             return Response(status=400, data={"error": "user not a question setter"})
-        questions = Question.objects.all().filter(setter=appUser).values()
+        questions_queryset = Question.objects.all().filter(setter=appUser)
+        questions = questions_queryset.values()
         for i in range(len(questions)):
+            reviewer_list = []
+            reviewers = questions_queryset[i].reviewers.all()
+            for reviewer in reviewers:
+                reviewer_list.append(reviewer.username)
             questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
+            questions[i]["reviewers"] = reviewer_list
+
         return Response({"data": questions})
 
     def post(self, request, *args, **kwargs):
@@ -131,17 +138,24 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             topic_list.append(Topic.objects.get(pk=uet_eligible[i]["topic_id"]))
             topic_id_list.append(uet_eligible[i]["topic_id"])
 
-        questions = (
+        # temporary arrangement
+        questions_queryset = (
             Question.objects.all()
             .exclude(setter=appUser)
-            .exclude(reviewer=appUser)
+            .exclude(reviewers__in=[appUser])
+            .exclude(reviews=3)
             .filter(is_accepted=False)
             .filter(topic_id__in=topic_list)
-            .values()
         )
+        questions = questions_queryset.values()
 
         for i in range(len(questions)):
+            reviewer_list = []
+            reviewers = questions_queryset[i].reviewers.all()
+            for reviewer in reviewers:
+                reviewer_list.append(reviewer.username)
             questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
+            questions[i]["reviewers"] = reviewer_list
         return Response({"data": questions})
 
     def post(self, request, *args, **kwargs):
@@ -161,19 +175,52 @@ class ReviewQuestionAPI(generics.GenericAPIView):
                 status=400, data={"error": "User not eligible to Review this question"}
             )
         question = Question.objects.get(pk=question_id)
-        question.difficulty_score = request.data["difficulty_score"]
-        question.acceptance_score = request.data["acceptance_score"]
-        question.is_accepted = request.data["acceptance_score"] >= 35
+        question.status = "UNDER REVIEW"
+        if question.reviews >= 3:
+            return Response(
+                status=400, data={"error": "Max review limit reached for this question"}
+            )
+
+        if question.reviews != 0:
+            acceptance_score = (
+                question.acceptance_score + request.data["acceptance_score"]
+            ) / 2
+        else:
+            acceptance_score = request.data["acceptance_score"]
+
+        difficulty_score = (
+            question.difficulty_score + request.data["difficulty_score"]
+        ) / 2
+        question.difficulty_score = difficulty_score
+        question.acceptance_score = acceptance_score
         question.topic = topic
-        question.reviewer = appUser
+        question.reviewers.add(appUser)
+        question.reviews += 1
+        reviewer_list = []
+        if question.reviews == 3:
+            question.is_accepted = acceptance_score >= 35
+            reviewers = question.reviewers.all()
+            for reviewer in reviewers:
+                reviewer_list.append(reviewer.username)
+                if reviewer.reward is not None:
+                    reviewer.reward.points += 3.5
+                    reviewer.reward.save()
+            setter = question.setter
+            if setter.reward is not None and question.is_accepted:
+                setter.reward.points += 8.5
+                question.status = "ACCEPTED"
+                setter.reward.save()
+            else:
+                question.status = "REJECTED"
+
         question.save()
-        setter = question.setter
-        if setter.reward is not None and question.is_accepted:
-            setter.reward.points += 8.5
-            setter.reward.save()
         return Response(
             {
                 "message": "question reviewed successfully",
                 "question_approval_status": question.is_accepted,
+                "question_acceptance_score": question.acceptance_score,
+                "question_difficulty_score": question.difficulty_score,
+                "reviewers": reviewer_list,
+                "status": question.status,
             }
         )

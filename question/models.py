@@ -22,12 +22,19 @@ class Question(models.Model):
         ("C", "C"),
         ("D", "D"),
     )
+    STATUS_CHOICES = (
+        ("NOT REVIEWED", "NOT REVIEWED"),
+        ("UNDER REVIEW", "UNDER REVIEW"),
+        ("ACCEPTED", "ACCEPTED"),
+        ("REJECTED", "REJECTED"),
+    )
     setter = models.ForeignKey(
         AppUser, blank=False, null=False, on_delete=CASCADE, related_name="setter"
     )
-    reviewer = models.ForeignKey(
-        AppUser, blank=True, null=True, on_delete=CASCADE, related_name="reviewer"
-    )
+    # reviewer = models.ForeignKey(
+    #     AppUser, blank=True, null=True, on_delete=CASCADE, related_name="reviewer"
+    # )
+    reviewers = models.ManyToManyField(AppUser, related_name="reviewer")
     question = models.TextField()
     A = models.TextField(null=False, blank=False)
     B = models.TextField(null=False, blank=False)
@@ -39,6 +46,10 @@ class Question(models.Model):
     is_accepted = models.BooleanField(default=False)
     usage_score = models.IntegerField(default=0)
     topic = models.ForeignKey(Topic, blank=False, null=False, on_delete=CASCADE)
+    reviews = models.IntegerField(default=0)
+    status = models.CharField(
+        max_length=256, choices=STATUS_CHOICES, default="NOT REVIEWED"
+    )
 
     class Meta:
         verbose_name = "Question"
