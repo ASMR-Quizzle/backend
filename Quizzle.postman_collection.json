@@ -12,37 +12,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"username\":\"user-1\",\n    \"password\":\"user-1-p\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8000/auth/users/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": [
-						"auth",
-						"users",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Activate",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"username\":\"user-1\",\n    \"password\":\"user-1-p\"\n}",
+					"raw": "{\n    \"username\":\"user-3\",\n    \"password\":\"user-3-p\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -88,7 +58,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"question\":\"question-2\",\n    \"A\":\"A-2\",\n    \"B\":\"B-2\",\n    \"C\":\"C-2\",\n    \"D\":\"D-2\",\n    \"answer\":\"B\",\n    \"difficulty\":60.5,\n    \"topic\":\"chemistry\"\n}",
+					"raw": "{\n    \"question\":\"question-2\",\n    \"A\":\"A-2\",\n    \"B\":\"B-2\",\n    \"C\":\"C-2\",\n    \"D\":\"D-2\",\n    \"answer\":\"B\",\n    \"difficulty_score\":60.5,\n    \"topic\":\"chemistry\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -118,7 +88,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODQ2NTg3LCJqdGkiOiI5ZDQ4NGQ3ZTBmYTE0NjYxYmYzZmZjMzdjMjA1NzUyYyIsInVzZXJfaWQiOjN9.1-aBhuk6r5Qq4lxssQHXT69TAD0AK6y-6bbfla7aqHA",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODg5OTE4LCJqdGkiOiI5NGYzYzZjODYxZTQ0M2FjOGI5NDRkZTJjMzU5OWVlMiIsInVzZXJfaWQiOjZ9.glSWuOFp6rnyVUrI3s4PMHyHUZvbzsRqSWt8X-Aj9l8",
 							"type": "string"
 						}
 					]
@@ -134,7 +104,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"test_type\":\"REVIEWER\",\n    \"score\":45,\n    \"max_score\":77,\n    \"topic\":\"chemistry\"\n}",
+					"raw": "{\n    \"test_type\":\"SETTER\",\n    \"score\":45,\n    \"max_score\":77,\n    \"topic\":\"maths\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -187,14 +157,14 @@
 			"response": []
 		},
 		{
-			"name": "Get Review",
+			"name": "Review",
 			"request": {
 				"auth": {
 					"type": "bearer",
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODM3MDQ1LCJqdGkiOiIyOWI5MjUzZWJmYmI0YTJlODFmNDRjMzM2YjQ2ODE4ZSIsInVzZXJfaWQiOjN9.Ck9IOUFZc1DjQyOz6pi-LzoyYRgAm7S3em2X_UXBs34",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODg5OTE4LCJqdGkiOiI5NGYzYzZjODYxZTQ0M2FjOGI5NDRkZTJjMzU5OWVlMiIsInVzZXJfaWQiOjZ9.glSWuOFp6rnyVUrI3s4PMHyHUZvbzsRqSWt8X-Aj9l8",
 							"type": "string"
 						}
 					]
@@ -224,7 +194,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODM3MDQ1LCJqdGkiOiIyOWI5MjUzZWJmYmI0YTJlODFmNDRjMzM2YjQ2ODE4ZSIsInVzZXJfaWQiOjN9.Ck9IOUFZc1DjQyOz6pi-LzoyYRgAm7S3em2X_UXBs34",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwOTA2ODE0LCJqdGkiOiI0MmVjY2IwZGUwZTc0Y2Y3OWRhYWE3NjI3YzlmNmVlMCIsInVzZXJfaWQiOjR9.K6xkko0EcTvlYhLkRz8gyC0Y159r7-XZyfqiAA4wZZA",
 							"type": "string"
 						}
 					]
@@ -233,7 +203,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"topic_id\":\"3\",\n    \"id\":\"7\",\n    \"acceptance_score\":34.4,\n    \"difficulty_score\":44.5\n}",
+					"raw": "{\n    \"topic_id\":\"3\",\n    \"id\":\"3\",\n    \"acceptance_score\":40.9,\n    \"difficulty_score\":44.5\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -262,7 +232,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"user-3@email.com\",\n    \"username\": \"user-3\",\n    \"is_setter\": false,\n    \"is_reviewer\": false,\n    \"is_active\": false,\n    \"password\": \"user-3-p\"\n}",
+					"raw": "{\n    \"email\": \"user-4@email.com\",\n    \"username\": \"user-4\",\n    \"is_setter\": true,\n    \"is_reviewer\": true,\n    \"is_active\": true,\n    \"password\": \"user-p\",\n    \"phone_number\":\"1234567890\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -279,6 +249,65 @@
 					"path": [
 						"user",
 						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Rewards",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/user/reward",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"reward"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Rewards",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjYwODkwMTI1LCJqdGkiOiJkMWQxNzNiNTVjZGU0NzllOTU2M2NkZjQ4ZDQ1YjQzNiIsInVzZXJfaWQiOjV9.ZHznCVNUQvcd1Nc17IFedhKKipJT_fZL5CIDSZdO38g",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"wallet_address\":\"user-3-wallet\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/user/rewards",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"user",
+						"rewards"
 					]
 				}
 			},

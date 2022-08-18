@@ -14,6 +14,7 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
             "is_reviewer",
             "is_active",
             "password",
+            "phone_number",
         )
         extra_kwargs = {
             "password": {"write_only": True},
@@ -32,6 +33,7 @@ class CreateUserProfileSerializer(serializers.ModelSerializer):
             email=validated_data["email"],
             is_setter=validated_data["is_setter"],
             is_reviewer=validated_data["is_reviewer"],
+            phone_number=validated_data["phone_number"],
             is_active=False,
         )
         user_profile.save()
