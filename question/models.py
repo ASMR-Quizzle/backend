@@ -69,3 +69,19 @@ class UserEligibilityTest(models.Model):
 
     def __str__(self):
         return self.appuser.username + "_" + self.topic.name + "_" + self.test_type
+
+
+class UserEligibilityTestTracker(models.Model):
+    TEST_TYPE_CHOICES = (("SETTER", "SETTER"), ("REVIEWER", "REVIEWER"))
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    has_ended = models.BooleanField(default=False)
+    appuser = models.ForeignKey(AppUser, null=False, blank=False, on_delete=CASCADE)
+    topic = models.ForeignKey(Topic, blank=False, null=False, on_delete=CASCADE)
+    test_type = models.CharField(
+        max_length=20, choices=TEST_TYPE_CHOICES, default="SETTER"
+    )
+    duration = models.IntegerField(default=1, null=False, blank=False)
+
+    def __str__(self):
+        return self.appuser.username + "_" + self.topic.name + "_" + self.test_type

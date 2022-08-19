@@ -1,3 +1,4 @@
+import datetime
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
@@ -5,6 +6,7 @@ from rest_framework.response import Response
 import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
 from user.models import AppUser
+import pytz
 
 from .serializers import (
     CSVTestQuestionsQuerySerializer,
@@ -15,7 +17,7 @@ from .serializers import (
     TopicSerializer,
     UserEligibilityTestSerializer,
 )
-from .models import Question, Topic, UserEligibilityTest
+from .models import Question, Topic, UserEligibilityTest, UserEligibilityTestTracker
 
 
 class SetQuestionAPI(generics.GenericAPIView):
@@ -106,13 +108,13 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
         score = request.data["score"]
         max_score = request.data["max_score"]
 
-        if appUser.is_setter == False and request.data["test_type"] == "SETTER":
-            return Response(status=400, data={"error": "user not a question setter"})
+        # if appUser.is_setter == False and request.data["test_type"] == "SETTER":
+        #     return Response(status=400, data={"error": "user not a question setter"})
 
-        if appUser.is_reviewer == False and request.data["test_type"] == "REVIEWER":
-            return Response(
-                status=400, data={"error": "user is not a question reviewer"}
-            )
+        # if appUser.is_reviewer == False and request.data["test_type"] == "REVIEWER":
+        #     return Response(
+        #         status=400, data={"error": "user is not a question reviewer"}
+        #     )
 
         if not Topic.objects.filter(name=request.data["topic"]).exists():
             return Response(
@@ -121,6 +123,15 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
             )
         topic = Topic.objects.get(name=request.data["topic"])
         is_eligible = score >= 35
+        if is_eligible:
+            if request.data["test_type"] == "REVIEWER" and appUser.is_reviewer == False:
+                appUser.is_reviewer = True
+                appUser.save()
+
+            if request.data["test_type"] == "SETTER" and appUser.is_setter == False:
+                appUser.is_setter = True
+                appUser.save()
+
         if UserEligibilityTest.objects.filter(
             topic=topic, appuser=appUser, test_type=test_type
         ).exists():
@@ -200,7 +211,6 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             for topic in topics:
                 topic_list.append(topic.name)
             questions[i]["topics"] = topic_list
-            # questions[i]["topic"] = Topic.objects.get(pk=questions[i]["topic_id"]).name
             questions[i]["reviewers"] = reviewer_list
         return Response({"data": questions})
 
@@ -402,3 +412,79 @@ class CSVTestQuestions(generics.GenericAPIView):
             )
             return response
         return Response(data={"data": questions})
+
+
+class UserEligibilityTestTrackerAPI(generics.GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        appuser = request.user.appuser
+        test_type = request.data["test_type"]
+        duration = int(request.data["duration"])  # in hours
+        topic_name = request.data["topic"]
+        start_time = datetime.datetime.now()
+        end_time = start_time + datetime.timedelta(hours=duration)
+
+        if UserEligibilityTestTracker.objects.filter(
+            has_ended=False, appuser=appuser
+        ).exists():
+            return Response(
+                data={"error": "User is already enrolled in one active test"},
+                status=400,
+            )
+
+        topic = Topic.objects.get(name=topic_name)
+
+        uet_tracker = UserEligibilityTestTracker(
+            start_time=start_time,
+            end_time=end_time,
+            has_ended=(start_time == end_time),
+            appuser=appuser,
+            topic=topic,
+            test_type=test_type,
+            duration=duration,
+        )
+        uet_tracker.save()
+        return Response(
+            data={
+                "data": {
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "topic": topic_name,
+                    "duration": duration,
+                    "test_type": test_type,
+                    "has_ended": False,
+                }
+            }
+        )
+
+    def get(self, request, *args, **kwargs):
+        appuser = request.user.appuser
+        if not UserEligibilityTestTracker.objects.filter(
+            has_ended=False, appuser=appuser
+        ).exists():
+            return Response(
+                data={"error": "User not enrolled in any test at this moment"},
+                status=400,
+            )
+        utc = pytz.UTC
+        uet_tracker = UserEligibilityTestTracker.objects.get(
+            has_ended=False, appuser=appuser
+        )
+        current_time = utc.localize(datetime.datetime.now())
+        end_time = uet_tracker.end_time
+        if end_time <= current_time:
+            uet_tracker.has_ended = True
+            uet_tracker.save()
+        return Response(
+            data={
+                "data": {
+                    "start_time": uet_tracker.start_time,
+                    "end_time": uet_tracker.end_time,
+                    "topic": uet_tracker.topic.name,
+                    "duration": uet_tracker.duration,
+                    "test_type": uet_tracker.test_type,
+                    "has_ended": uet_tracker.has_ended,
+                }
+            }
+        )
