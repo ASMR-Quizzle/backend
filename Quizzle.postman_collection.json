@@ -401,6 +401,40 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Get Questions",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/question/test?topic=Physics&limit=100&type=csv",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"question",
+						"test"
+					],
+					"query": [
+						{
+							"key": "topic",
+							"value": "Physics"
+						},
+						{
+							"key": "limit",
+							"value": "100"
+						},
+						{
+							"key": "type",
+							"value": "csv"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

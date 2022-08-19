@@ -37,3 +37,13 @@ class FileUploadSerializer(serializers.Serializer):
 
     class Meta:
         fields = ("file",)
+
+
+class CSVTestQuestionsSerializer(serializers.Serializer):
+    pass
+
+
+class CSVTestQuestionsQuerySerializer(serializers.Serializer):
+    topic = serializers.CharField(max_length=512)
+    type = serializers.CharField(max_length=512)
+    limit = serializers.CharField(max_length=512)

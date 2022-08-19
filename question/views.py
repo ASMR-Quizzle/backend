@@ -3,9 +3,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
 import pandas as pd
+from drf_yasg.utils import swagger_auto_schema
 from user.models import AppUser
 
 from .serializers import (
+    CSVTestQuestionsQuerySerializer,
+    CSVTestQuestionsSerializer,
     FileUploadSerializer,
     ReviewQuestionSerializer,
     SetQuestionSerializer,
@@ -352,6 +355,14 @@ class UploadCSV(generics.GenericAPIView):
 
 
 class CSVTestQuestions(generics.GenericAPIView):
+    serializer_class = CSVTestQuestionsSerializer
+
+    @swagger_auto_schema(
+        query_serializer=CSVTestQuestionsQuerySerializer,
+        security=[],
+        operation_id="Get Test Data",
+        operation_description="This endpoint is used to get accepted questions for a particular topic, type can be assigned as csv if csv is expected as response else json data is returned by default",
+    )
     def get(self, request, *args, **kwargs):
         limit = request.GET.get("limit")
         if limit is None:
