@@ -1,8 +1,8 @@
+from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
-from pandas import read_csv
-
+import pandas as pd
 from user.models import AppUser
 
 from .serializers import (
@@ -301,7 +301,7 @@ class UploadCSV(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         file = serializer.validated_data["file"]
-        reader = read_csv(file)
+        reader = pd.read_csv(file)
         question_count = 0
         saved_count = 0
         for _, row in reader.iterrows():
@@ -349,3 +349,45 @@ class UploadCSV(generics.GenericAPIView):
                 }
             },
         )
+
+
+class CSVTestQuestions(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        limit = request.GET.get("limit")
+        if limit is None:
+            limit = 5
+        format = request.GET.get("type")
+        topic_name = request.GET.get("topic")
+        if not Topic.objects.filter(name=topic_name).exists():
+            return Response(
+                status=404, data={"error": f"Topic '{topic_name}' does not exist"}
+            )
+        topic = Topic.objects.get(name=topic_name)
+        questions = list(
+            Question.objects.filter(topics__in=[topic], is_accepted=True).values()
+        )[: int(limit)]
+
+        if format == "csv":
+            df = pd.DataFrame(columns=["Question", "A", "B", "C", "D", "Answer"])
+            for question in questions:
+                df.loc[len(df.index)] = [
+                    question["question"],
+                    question["A"],
+                    question["B"],
+                    question["C"],
+                    question["D"],
+                    question["answer"],
+                ]
+            response = HttpResponse(content_type="text/csv")
+            response[
+                "Content-Disposition"
+            ] = f"attachment; filename={topic_name}_{limit}_Questions.csv"
+            df.to_csv(
+                path_or_buf=response,
+                sep=";",
+                float_format="%.2f",
+                index=False,
+                decimal=",",
+            )
+            return response
+        return Response(data={"data": questions})

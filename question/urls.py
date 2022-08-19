@@ -1,6 +1,7 @@
 from django.urls import path, include
 
 from .views import (
+    CSVTestQuestions,
     ReviewQuestionAPI,
     SetQuestionAPI,
     TopicsAPI,
@@ -15,4 +16,5 @@ urlpatterns = [
     path("review", ReviewQuestionAPI.as_view(), name="review questions"),
     path("topics", TopicsAPI.as_view(), name="all topics"),
     path("bulk", UploadCSV.as_view(), name="bulk upload"),
+    path("test", CSVTestQuestions.as_view(), name="test questions"),
 ]
