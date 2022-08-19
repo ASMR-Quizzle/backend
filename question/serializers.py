@@ -30,3 +30,10 @@ class ReviewQuestionSerializer(serializers.Serializer):
 
 class TopicSerializer(serializers.Serializer):
     pass
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    class Meta:
+        fields = ("file",)

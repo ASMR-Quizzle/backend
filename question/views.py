@@ -1,8 +1,12 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
+from pandas import read_csv
+
+from user.models import AppUser
 
 from .serializers import (
+    FileUploadSerializer,
     ReviewQuestionSerializer,
     SetQuestionSerializer,
     TopicSerializer,
@@ -281,3 +285,67 @@ class TopicsAPI(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         topics = Topic.objects.all().values()
         return Response(data={"data": topics})
+
+
+class UploadCSV(generics.GenericAPIView):
+    serializer_class = FileUploadSerializer
+    premission_classes = IsAuthenticated
+
+    def post(self, request, *args, **kwargs):
+        if request.user.is_superuser == False:
+            return Response(status=401, data={"error": "Admins only route"})
+        if not AppUser.objects.filter(user=request.user).exists():
+            return Response(
+                status=400, data={"error": "No App User associated with current admin"}
+            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = serializer.validated_data["file"]
+        reader = read_csv(file)
+        question_count = 0
+        saved_count = 0
+        for _, row in reader.iterrows():
+            question_count += 1
+            question = row["Question"]
+            A = row["A"]
+            B = row["B"]
+            C = row["C"]
+            D = row["D"]
+            answer = row["Answer"]
+            topic_name = row["Topic"]
+            if not (A or B or C or D or answer or question or topic):
+                continue
+            if not Topic.objects.filter(name=topic_name).exists():
+                topic = Topic(name=topic_name)
+                topic.save()
+            topic = Topic.objects.get(name=topic_name)
+            topic.question_count += 1
+            new_question = Question(
+                setter=request.user.appuser,
+                question=question,
+                A=A,
+                B=B,
+                C=C,
+                D=D,
+                answer=answer,
+                difficulty_score=75,
+                acceptance_score=75,
+                is_accepted=True,
+                status="ACCEPTED",
+                reviews=3,
+            )
+            new_question.save()
+            new_question.topics.add(topic)
+            new_question.reviewers.add(request.user.appuser)
+            new_question.save()
+            saved_count += 1
+
+        return Response(
+            status=201,
+            data={
+                "data": {
+                    "total_questions": question_count,
+                    "successful_uploads": saved_count,
+                }
+            },
+        )
