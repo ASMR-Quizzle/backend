@@ -448,6 +448,7 @@ class UserEligibilityTestTrackerAPI(generics.GenericAPIView):
         return Response(
             data={
                 "data": {
+                    "tracker_id": uet_tracker.pk,
                     "start_time": start_time,
                     "end_time": end_time,
                     "topic": topic_name,
@@ -479,6 +480,7 @@ class UserEligibilityTestTrackerAPI(generics.GenericAPIView):
         return Response(
             data={
                 "data": {
+                    "tracker_id": uet_tracker.pk,
                     "start_time": uet_tracker.start_time,
                     "end_time": uet_tracker.end_time,
                     "topic": uet_tracker.topic.name,
