@@ -47,3 +47,9 @@ class CSVTestQuestionsQuerySerializer(serializers.Serializer):
     topic = serializers.CharField(max_length=512)
     type = serializers.CharField(max_length=512)
     limit = serializers.CharField(max_length=512)
+
+
+class UserEligibilityTestTrackerSerializer(serializers.Serializer):
+    topic = serializers.CharField(max_length=512)
+    test_type = serializers.CharField(max_length=512)
+    duration = serializers.IntegerField()

@@ -16,6 +16,7 @@ from .serializers import (
     SetQuestionSerializer,
     TopicSerializer,
     UserEligibilityTestSerializer,
+    UserEligibilityTestTrackerSerializer,
 )
 from .models import Question, Topic, UserEligibilityTest, UserEligibilityTestTracker
 
@@ -416,6 +417,7 @@ class CSVTestQuestions(generics.GenericAPIView):
 
 class UserEligibilityTestTrackerAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = UserEligibilityTestTrackerSerializer
 
     def post(self, request, *args, **kwargs):
         appuser = request.user.appuser
