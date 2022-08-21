@@ -17,6 +17,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: &quizzle-backend quizzle-backend
     env_file:
       - .env
     ports:
@@ -26,10 +27,35 @@ services:
       test: ["CMD", "curl", "-f", "http://quizzle-backend/ping"]
     networks:
       - backendnet
+    volumes:
+      - .:/code
     links:
       - db
     depends_on:
       - db
+      - redis
+    
+  
+  celery:
+    build: .
+    command: celery -A backend worker -l INFO
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+    links:
+      - db
+    
+    networks:
+      - backendnet
+    
+  redis:
+
+    networks:
+      - backendnet
+    image: redis
+
 networks:
   backendnet:
     name: backend_network

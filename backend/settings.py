@@ -214,7 +214,24 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Celery RMQ config
+# CELERY = {
+#     "BROKER_URL": os.environ.get("CELERY_BROKER", "amqp://localhost"),
+#     "CELERY_IMPORTS": ("celery.tasks",),
+#     "CELERY_TASK_SERIALIZER": "json",
+#     "CELERY_RESULT_SERIALIZER": "json",
+#     "CELERY_ACCEPT_CONTENT": ["json"],
+# }
+CELERY_BROKER_URL = "redis://redis"
+CELERY_RESULT_BACKEND = "redis://redis"
 
+
+# CELERY_BEAT_SCHEDULE = {
+#     'notiff': {
+#         'task': 'Users.tasks.send_notification',
+#         'schedule': crontab(minute=1)
+#     }
+# }
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
