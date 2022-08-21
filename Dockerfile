@@ -7,4 +7,5 @@ COPY requirements.txt /code/
 RUN pip install wheel && pip install -r requirements.txt
 COPY . /code/
 RUN chmod +x /code/entrypoint.sh
-ENTRYPOINT  [ "/code/entrypoint.sh" ]
+COPY ./wait-for-it.sh /code/wait-for-it.sh
+CMD  /code/wait-for-it.sh db:5432 --strict --timeout=0 && /code/wait-for-it.sh redis:6379 --strict --timeout=0 && /code/entrypoint.sh
