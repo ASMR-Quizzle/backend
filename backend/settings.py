@@ -222,9 +222,15 @@ USE_TZ = True
 #     "CELERY_RESULT_SERIALIZER": "json",
 #     "CELERY_ACCEPT_CONTENT": ["json"],
 # }
-CELERY_BROKER_URL = "redis://redis"
-CELERY_RESULT_BACKEND = "redis://redis"
-
+# CELERY_BROKER_URL = "redis://redis"
+# CELERY_RESULT_BACKEND = "redis://redis"
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_TASK_TRACK_STARTED = True
+# CELERY_ACCEPT_CONTENT = ["application/json"]
+# CELERY_TASK_SERIALIZER = "json"
+# CELERY_RESULT_SERIALIZER = "json"
+# CELERY_TIMEZONE = TIME_ZONE
 
 # CELERY_BEAT_SCHEDULE = {
 #     'notiff': {
@@ -236,6 +242,7 @@ CELERY_RESULT_BACKEND = "redis://redis"
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

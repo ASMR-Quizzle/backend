@@ -10,52 +10,54 @@ services:
       - 5432:5432
     expose:
       - 5432
-    networks:
-      - backendnet
       
   quizzle-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    image: &quizzle-backend quizzle-backend
     env_file:
       - .env
     ports:
       - 8000:8000
-    restart: on-failure
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://quizzle-backend/ping"]
-    networks:
-      - backendnet
     volumes:
       - .:/code
     links:
       - db
+      - redis 
     depends_on:
       - db
       - redis
     
-  
-  celery:
-    build: .
-    command: celery -A backend worker -l INFO
-    volumes:
-      - .:/code
-    depends_on:
-      - db
-      - redis
-    links:
-      - db
-    
-    networks:
-      - backendnet
     
   redis:
-
-    networks:
-      - backendnet
     image: redis
+  
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command:  celery -A backend worker -l info
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - quizzle-backend
+    links:
+      - db
+      - redis
 
-networks:
-  backendnet:
-    name: backend_network
+  # flower:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - '5555:5555'
+  #   command: "celery -A myproject flower --address=0.0.0.0"
+  #   depends_on:
+  #     - celery
+  #   links:
+  #     - redis
+  #     - celery
