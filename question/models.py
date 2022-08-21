@@ -1,3 +1,4 @@
+from pyexpat import model
 from django.db import models
 from django.db.models import CASCADE
 from user.models import AppUser
@@ -47,6 +48,7 @@ class Question(models.Model):
     status = models.CharField(
         max_length=256, choices=STATUS_CHOICES, default="NOT REVIEWED"
     )
+    explanation = models.CharField(default="N/A", max_length=10000)
 
     class Meta:
         verbose_name = "Question"

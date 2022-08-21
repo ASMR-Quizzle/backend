@@ -1,4 +1,5 @@
 import datetime
+from pydoc_data.topics import topics
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
@@ -12,6 +13,8 @@ from .serializers import (
     CSVTestQuestionsQuerySerializer,
     CSVTestQuestionsSerializer,
     FileUploadSerializer,
+    QuestionBankGeneratorQuerySerializer,
+    QuestionBankGeneratorSerializer,
     ReviewQuestionSerializer,
     SetQuestionSerializer,
     TopicSerializer,
@@ -77,6 +80,7 @@ class SetQuestionAPI(generics.GenericAPIView):
         B = request.data["B"]
         C = request.data["C"]
         D = request.data["D"]
+        explanation = request.data["explanation"]
         answer = request.data["answer"]
         difficulty_score = request.data["difficulty_score"]
         question = Question(
@@ -88,6 +92,7 @@ class SetQuestionAPI(generics.GenericAPIView):
             D=D,
             answer=answer,
             difficulty_score=difficulty_score,
+            explanation=explanation,
         )
         question.save()
         for topic in topics_queryset:
@@ -108,14 +113,6 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
         test_type = request.data["test_type"]
         score = request.data["score"]
         max_score = request.data["max_score"]
-
-        # if appUser.is_setter == False and request.data["test_type"] == "SETTER":
-        #     return Response(status=400, data={"error": "user not a question setter"})
-
-        # if appUser.is_reviewer == False and request.data["test_type"] == "REVIEWER":
-        #     return Response(
-        #         status=400, data={"error": "user is not a question reviewer"}
-        #     )
 
         if not Topic.objects.filter(name=request.data["topic"]).exists():
             return Response(
@@ -327,7 +324,19 @@ class UploadCSV(generics.GenericAPIView):
             D = row["D"]
             answer = row["Answer"]
             topic_name = row["Topic"]
-            if not (A or B or C or D or answer or question or topic):
+            explanation = row["Explanation"]
+            difficulty_score = row["Difficulty"]
+            if not (
+                A
+                or B
+                or C
+                or D
+                or answer
+                or question
+                or topic
+                or explanation
+                or difficulty_score
+            ):
                 continue
             if not Topic.objects.filter(name=topic_name).exists():
                 topic = Topic(name=topic_name)
@@ -342,11 +351,12 @@ class UploadCSV(generics.GenericAPIView):
                 C=C,
                 D=D,
                 answer=answer,
-                difficulty_score=75,
+                difficulty_score=difficulty_score,
                 acceptance_score=75,
                 is_accepted=True,
                 status="ACCEPTED",
                 reviews=3,
+                explanation=explanation,
             )
             new_question.save()
             new_question.topics.add(topic)
@@ -390,7 +400,18 @@ class CSVTestQuestions(generics.GenericAPIView):
         )[: int(limit)]
 
         if format == "csv":
-            df = pd.DataFrame(columns=["Question", "A", "B", "C", "D", "Answer"])
+            df = pd.DataFrame(
+                columns=[
+                    "Question",
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "Answer",
+                    "Explanation",
+                    "Difficulty",
+                ]
+            )
             for question in questions:
                 df.loc[len(df.index)] = [
                     question["question"],
@@ -399,6 +420,8 @@ class CSVTestQuestions(generics.GenericAPIView):
                     question["C"],
                     question["D"],
                     question["answer"],
+                    question["explanation"],
+                    question["difficulty_score"],
                 ]
             response = HttpResponse(content_type="text/csv")
             response[
@@ -492,3 +515,87 @@ class UserEligibilityTestTrackerAPI(generics.GenericAPIView):
                 }
             }
         )
+
+
+class QuestionBankGeneratorAPI(generics.GenericAPIView):
+    serializer_class = QuestionBankGeneratorSerializer
+
+    @swagger_auto_schema(
+        query_serializer=QuestionBankGeneratorQuerySerializer,
+        security=[],
+        operation_id="Get Test Data as CSV",
+        operation_description="This endpoint is used to get accepted questions for a particular topic, type can be assigned as csv if csv is expected as response else json data is returned by default",
+    )
+    def get(self, request, *args, **kwargs):
+        topic_names = request.GET.get("topics").split("+")[0].split(" ")
+        easy = request.GET.get("easy").split("+")[0].split(" ")
+        medium = request.GET.get("medium").split("+")[0].split(" ")
+        hard = request.GET.get("hard").split("+")[0].split(" ")
+        format = request.GET.get("type")
+        topics = Topic.objects.all().filter(name__in=topic_names)
+        questions_queryset = Question.objects.all().filter(
+            topics__in=topics, is_accepted=True
+        )
+        questions = []
+        for i in range(len(topic_names)):
+            easy[i] = int(easy[i])
+            medium[i] = int(medium[i])
+            hard[i] = int(hard[i])
+        for i in range(len(topics)):
+            sub_query = questions_queryset.filter(topics__in=[topics[i]])
+            sub_query_easy = list(
+                sub_query.filter(
+                    difficulty_score__gte=0, difficulty_score__lte=33
+                ).values()
+            )[: easy[i]]
+            sub_query_medium = list(
+                sub_query.filter(
+                    difficulty_score__gte=34, difficulty_score__lte=66
+                ).values()
+            )[: medium[i]]
+            sub_query_hard = list(
+                sub_query.filter(
+                    difficulty_score__gte=67, difficulty_score__lte=100
+                ).values()
+            )[: hard[i]]
+            questions += sub_query_easy
+            questions += sub_query_medium
+            questions += sub_query_hard
+
+        if format == "csv":
+            df = pd.DataFrame(
+                columns=[
+                    "Question",
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "Answer",
+                    "Explanation",
+                    "Difficulty",
+                ]
+            )
+            for question in questions:
+                df.loc[len(df.index)] = [
+                    question["question"],
+                    question["A"],
+                    question["B"],
+                    question["C"],
+                    question["D"],
+                    question["answer"],
+                    question["explanation"],
+                    question["difficulty_score"],
+                ]
+            response = HttpResponse(content_type="text/csv")
+            response[
+                "Content-Disposition"
+            ] = f"attachment; filename=Quizzle_Questions.csv"
+            df.to_csv(
+                path_or_buf=response,
+                sep=";",
+                float_format="%.2f",
+                index=False,
+                decimal=",",
+            )
+            return response
+        return Response(data={"data": questions})
