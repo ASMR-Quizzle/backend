@@ -1,3 +1,4 @@
+from pydoc_data.topics import topics
 from rest_framework import serializers
 
 from .models import Question
@@ -12,6 +13,7 @@ class SetQuestionSerializer(serializers.Serializer):
     answer = serializers.CharField()
     difficulty_score = serializers.FloatField()
     topics = serializers.CharField()
+    explanation = serializers.CharField()
 
 
 class UserEligibilityTestSerializer(serializers.Serializer):
@@ -53,3 +55,15 @@ class UserEligibilityTestTrackerSerializer(serializers.Serializer):
     topic = serializers.CharField(max_length=512)
     test_type = serializers.CharField(max_length=512)
     duration = serializers.IntegerField()
+
+
+class QuestionBankGeneratorQuerySerializer(serializers.Serializer):
+    topics = serializers.CharField()
+    easy = serializers.CharField()
+    medium = serializers.CharField()
+    hard = serializers.CharField()
+    type = serializers.CharField()
+
+
+class QuestionBankGeneratorSerializer(serializers.Serializer):
+    pass
