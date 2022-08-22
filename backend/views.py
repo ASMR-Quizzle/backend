@@ -15,7 +15,7 @@ class Ping(generics.GenericAPIView):
 
 class ExampleTaskAPI(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
-        task = example_task.delay()
+        task = example_task.delay(1)
         print(task.status)
         return Response(str(task), status=201)
 

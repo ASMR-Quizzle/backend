@@ -1,11 +1,11 @@
 import datetime
-from pydoc_data.topics import topics
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
 from rest_framework.response import Response
 import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
+from question.tasks import uploadCSVTask
 from user.models import AppUser
 import pytz
 
@@ -21,7 +21,13 @@ from .serializers import (
     UserEligibilityTestSerializer,
     UserEligibilityTestTrackerSerializer,
 )
-from .models import Question, Topic, UserEligibilityTest, UserEligibilityTestTracker
+from .models import (
+    CSVFile,
+    Question,
+    Topic,
+    UserEligibilityTest,
+    UserEligibilityTestTracker,
+)
 
 
 class SetQuestionAPI(generics.GenericAPIView):
@@ -596,3 +602,22 @@ class QuestionBankGeneratorAPI(generics.GenericAPIView):
             )
             return response
         return Response(data={"data": questions})
+
+
+class UploadCSVAsync(generics.GenericAPIView):
+    serializer_class = FileUploadSerializer
+
+    def post(self, request, *args, **kwargs):
+        if request.user.is_superuser == False:
+            return Response(status=401, data={"error": "Admins only route"})
+        if not AppUser.objects.filter(user=request.user).exists():
+            return Response(
+                status=400, data={"error": "No App User associated with current admin"}
+            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = serializer.validated_data["file"]
+        csv = CSVFile(file=file)
+        csv.save()
+        task = uploadCSVTask.delay(csv.pk, request.user.appuser.pk)
+        return Response(data={"task_id": str(task)})

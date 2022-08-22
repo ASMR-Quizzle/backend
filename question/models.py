@@ -87,3 +87,7 @@ class UserEligibilityTestTracker(models.Model):
 
     def __str__(self):
         return self.appuser.username + "_" + self.topic.name + "_" + self.test_type
+
+
+class CSVFile(models.Model):
+    file = models.FileField(upload_to="csv")
