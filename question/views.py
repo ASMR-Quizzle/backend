@@ -5,7 +5,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
-from question.tasks import uploadCSVTask
+from question.tasks import ml_model_prediction_task, uploadCSVTask
 from user.models import AppUser
 import pytz
 
@@ -621,3 +621,9 @@ class UploadCSVAsync(generics.GenericAPIView):
         csv.save()
         task = uploadCSVTask.delay(csv.pk, request.user.appuser.pk)
         return Response(data={"task_id": str(task)})
+
+
+class MLModelPredictionAPI(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        task = ml_model_prediction_task.delay("What are the worst mammals?")
+        return Response(data={"task_id": task.id})

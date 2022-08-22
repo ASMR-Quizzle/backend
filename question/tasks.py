@@ -3,6 +3,7 @@ from question.models import CSVFile, Question, Topic
 import pandas as pd
 from user.models import AppUser
 import os
+import pickle
 
 
 @shared_task
@@ -66,3 +67,12 @@ def uploadCSVTask(csv_id, appuser_id):
         "total_questions": question_count,
         "successful_uploads": saved_count,
     }
+
+
+@shared_task
+def ml_model_prediction_task(question):
+    filename = "roberta10_model_classification.sav"
+    loaded_model = pickle.load(open(filename, "rb"))
+    result = loaded_model.predict([question])
+    topics = ["Physics", "Chemistry", "Maths", "Biology"]
+    return topics[result[0][0]]

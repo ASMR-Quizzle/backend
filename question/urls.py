@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     CSVTestQuestions,
+    MLModelPredictionAPI,
     QuestionBankGeneratorAPI,
     ReviewQuestionAPI,
     SetQuestionAPI,
@@ -25,4 +26,5 @@ urlpatterns = [
     path("bulk", UploadCSV.as_view(), name="bulk upload"),
     path("test", CSVTestQuestions.as_view(), name="test questions"),
     path("bank", QuestionBankGeneratorAPI.as_view(), name="question bank"),
+    path("predict", MLModelPredictionAPI.as_view(), name="ml model prediction"),
 ]
