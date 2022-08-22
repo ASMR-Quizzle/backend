@@ -408,8 +408,6 @@ class CSVTestQuestions(generics.GenericAPIView):
                     "C",
                     "D",
                     "Answer",
-                    "Explanation",
-                    "Difficulty",
                 ]
             )
             for question in questions:
@@ -420,8 +418,6 @@ class CSVTestQuestions(generics.GenericAPIView):
                     question["C"],
                     question["D"],
                     question["answer"],
-                    question["explanation"],
-                    question["difficulty_score"],
                 ]
             response = HttpResponse(content_type="text/csv")
             response[
@@ -576,6 +572,7 @@ class QuestionBankGeneratorAPI(generics.GenericAPIView):
                 ]
             )
             for question in questions:
+                print(question)
                 df.loc[len(df.index)] = [
                     question["question"],
                     question["A"],

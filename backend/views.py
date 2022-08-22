@@ -24,4 +24,7 @@ class RetrieveTask(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         task = AsyncResult(request.GET.get("task_id"))
         print(task.status)
-        return Response(str(task), status=201)
+        return Response(
+            data={"status": task.status, "info": task.info, "result": task.result},
+            status=201,
+        )

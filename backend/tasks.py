@@ -15,6 +15,6 @@ logger = get_task_logger(__name__)
 @shared_task
 def example_task():
     print("ereeeee")
-    sleep(5)
+    sleep(20)
     logger.info(f"GET returned status_code ")
-    return 0
+    return 5
