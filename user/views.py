@@ -1,6 +1,4 @@
-from os import stat
-
-from question.models import Topic, UserEligibilityTest
+from question.models import UserEligibilityTest
 from .serializers import (
     CreateUserProfileSerializer,
     RewardsSerializer,

@@ -8,7 +8,7 @@ from drf_yasg.utils import swagger_auto_schema
 from question.tasks import ml_model_prediction_task, uploadCSVTask
 from user.models import AppUser
 import pytz
-
+import pickle
 from .serializers import (
     CSVTestQuestionsQuerySerializer,
     CSVTestQuestionsSerializer,
@@ -623,7 +623,16 @@ class UploadCSVAsync(generics.GenericAPIView):
         return Response(data={"task_id": str(task)})
 
 
-class MLModelPredictionAPI(generics.GenericAPIView):
+class MLModelPredictionAsyncAPI(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         task = ml_model_prediction_task.delay("What are the worst mammals?")
         return Response(data={"task_id": task.id})
+
+
+class MLModelPredictionAPI(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        filename = "roberta10_model_classification.sav"
+        loaded_model = pickle.load(open(filename, "rb"))
+        result = loaded_model.predict(["What is the point of life?"])
+        topics = ["Physics", "Chemistry", "Maths", "Biology"]
+        return Response(data={"topic": topics[result[0][0]]})

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     # "djoser",
+    "institute.apps.InstituteConfig",
     "question.apps.QuestionConfig",
     "user.apps.UserConfig",
     "drf_yasg",
