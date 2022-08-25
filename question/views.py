@@ -28,6 +28,16 @@ from .models import (
     UserEligibilityTest,
     UserEligibilityTestTracker,
 )
+import torch
+from torch import nn
+from transformers import AutoTokenizer, AutoModel
+from ml_collections import ConfigDict
+import numpy as np
+
+cfg = ConfigDict()
+cfg.epochs = 10
+cfg.max_length = 256
+cfg.batch_size = 32
 
 
 class SetQuestionAPI(generics.GenericAPIView):
@@ -629,10 +639,52 @@ class MLModelPredictionAsyncAPI(generics.GenericAPIView):
         return Response(data={"task_id": task.id})
 
 
+class Classifier(nn.Module):
+    def __init__(self, label_to_int, model_alias=None, cfg=None):
+        super().__init__()
+        if model_alias is not None:
+            self.backbone = AutoModel.from_pretrained(model_alias)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_alias)
+        else:
+            self.backbone = AutoModel.from_pretrained("roberta-base")
+            self.tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+
+        self.lin = nn.Linear(768, len(label_to_int.keys()))
+        self.device = torch.device("cpu")
+
+        self.cfg = cfg
+
+    def forward(self, batch):
+        tokenized = self.tokenizer(
+            text=list(batch[0]),
+            return_attention_mask=True,
+            max_length=cfg.max_length,
+            padding="max_length",
+            truncation=True,
+            return_tensors="pt",
+        )
+        tokenized = {k: v.to(self.device) for k, v in tokenized.items()}
+        x = self.backbone(**tokenized)
+        x = self.lin(x.pooler_output)
+        return x
+
+
 class MLModelPredictionAPI(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
-        filename = "roberta10_model_classification.sav"
-        loaded_model = pickle.load(open(filename, "rb"))
-        result = loaded_model.predict(["What is the point of life?"])
-        topics = ["Physics", "Chemistry", "Maths", "Biology"]
-        return Response(data={"topic": topics[result[0][0]]})
+        # filename = "roberta10_model_classification.sav"
+        # loaded_model = pickle.load(open(filename, "rb"))
+        # result = loaded_model.predict(["What is the point of life?"])
+        # topics = ["Physics", "Chemistry", "Maths", "Biology"]
+        # return Response(data={"topic": topics[result[0][0]]})
+        category_mapping = {"P": 0, "C": 1, "M": 2, "B": 3}
+        print("e")
+        device = torch.device("cpu")
+        model = Classifier(category_mapping)
+        model.load_state_dict(torch.load("topic_weights.pt", map_location=device))
+        with torch.no_grad():
+            model.eval()
+            output = model([["What are aromatic compounds?"]])
+        reverse_list = ["Physics", "Chemistry", "Maths", "Biology"]
+        topic = reverse_list[int(np.argmax(output))]
+        print(topic)
+        return Response(data={"data": topic})

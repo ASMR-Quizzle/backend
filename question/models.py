@@ -91,3 +91,7 @@ class UserEligibilityTestTracker(models.Model):
 
 class CSVFile(models.Model):
     file = models.FileField(upload_to="csv")
+
+
+class GetQuestionType(models.Model):
+    pass
