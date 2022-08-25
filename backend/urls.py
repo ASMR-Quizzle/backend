@@ -45,6 +45,7 @@ urlpatterns = [
     path("institute/", include("institute.urls")),
     path("auth/login", TokenObtainPairView.as_view(), name="login"),
     path("auth/refresh", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api-auth/", include("rest_framework.urls")),
 ]
 
 urlpatterns += [

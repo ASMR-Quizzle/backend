@@ -45,3 +45,10 @@ class RewardsSerializer(serializers.Serializer):
 
 class UserEligibleTopicsSerializer(serializers.Serializer):
     pass
+
+class UserSerializer(serializers.ModelSerializer):
+    user = CreateUserProfileSerializer(read_only=True)
+
+    class Meta:
+        model = AppUser
+        fields = '__all__'
