@@ -3,12 +3,14 @@ from .serializers import (
     CreateUserProfileSerializer,
     RewardsSerializer,
     UserEligibleTopicsSerializer,
+    UserSerializer,
 )
-from rest_framework import generics
+from rest_framework.decorators import action
+from rest_framework import generics, viewsets
 from rest_framework.response import Response
 from .utils import get_tokens_for_user
-from .models import Reward
-from rest_framework.permissions import IsAuthenticated
+from .models import Reward, AppUser
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
 # Create your views here.
 class UserRegistrationAPI(generics.GenericAPIView):
@@ -20,7 +22,7 @@ class UserRegistrationAPI(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token = get_tokens_for_user(user)
-        return Response({"data": {"token": token}})
+        return Response(token)
 
 
 class RewardsAPI(generics.GenericAPIView):
@@ -86,3 +88,18 @@ class UserEligibleTopicsAPI(generics.GenericAPIView):
             appuser=request.user.appuser, is_eligible=True
         ).values()
         return Response(data={"data": topics})
+
+class UserAPI(viewsets.ModelViewSet):
+    queryset = AppUser.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated, IsAuthenticatedOrReadOnly, )
+
+    @action(detail=False, methods=['get'], url_name='profile', url_path='profile')
+    def profile(self, request, *args, **kwargs):
+        try:
+            user = request.user
+            app_user = self.queryset.get(user=user)
+            serializer = self.serializer_class(app_user)
+            return Response(data=serializer.data, status=200)
+        except:
+            return Response(data={'message': 'Server Error occured'}, status=500)
