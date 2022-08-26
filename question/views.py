@@ -34,6 +34,18 @@ from .models import (
 from .utils import check_duplicate
 
 
+class CheckDeDup(generics.GenericAPIView):
+    serializer_class = SetQuestionSerializer
+
+    def post(self, request, *args, **kwargs):
+        # try:
+        question = request.data["question"]
+        fl = check_duplicate(question)
+        return Response(data={"is_dup": fl}, status=200)
+        # except:
+        #     return Response(data={"message": "server error occured"}, status=500)
+
+
 class SetQuestionAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = SetQuestionSerializer
@@ -104,10 +116,6 @@ class SetQuestionAPI(generics.GenericAPIView):
             difficulty_score=difficulty_score,
             explanation=explanation,
         )
-        if check_duplicate(question.question) == True:
-            return Response(
-                data={"message": "This question already exists"}, status=400
-            )
         question.save()
         for topic in topics_queryset:
             topic.question_count += 1
@@ -259,6 +267,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             .filter(is_accepted=False)
             .filter(topics__in=topic_list)
             .distinct()
+            .order_by("-pk")
         )
         questions = questions_queryset.values()
 
@@ -323,7 +332,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             question.reviewer_notes = request.data["reviewer_notes"]
         reviewer_list = []
         if question.reviews == 3:
-            question.is_accepted = acceptance_score >= 35
+            question.is_accepted = acceptance_score >= 5
             reviewers = question.reviewers.all()
             for reviewer in reviewers:
                 reviewer_list.append(reviewer.username)
@@ -362,7 +371,7 @@ class TopicsAPI(generics.GenericAPIView):
         return Response(data={"data": topics})
 
 
-class UploadCSV(generics.GenericAPIView):
+class UploadCSVAdmin(generics.GenericAPIView):
     serializer_class = FileUploadSerializer
     premission_classes = IsAuthenticated
 
@@ -425,6 +434,82 @@ class UploadCSV(generics.GenericAPIView):
             new_question.save()
             new_question.topics.add(topic)
             new_question.reviewers.add(request.user.appuser)
+            new_question.save()
+            saved_count += 1
+
+        return Response(
+            status=201,
+            data={
+                "data": {
+                    "total_questions": question_count,
+                    "successful_uploads": saved_count,
+                }
+            },
+        )
+
+
+class UploadCSV(generics.GenericAPIView):
+    serializer_class = FileUploadSerializer
+    premission_classes = IsAuthenticated
+
+    def post(self, request, *args, **kwargs):
+        if request.user.appuser == False:
+            return Response(status=401, data={"error": "User not a question setter"})
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        file = serializer.validated_data["file"]
+        reader = pd.read_csv(file)
+        question_count = 0
+        saved_count = 0
+        for _, row in reader.iterrows():
+            question_count += 1
+            question = row["Question"]
+            A = row["A"]
+            B = row["B"]
+            C = row["C"]
+            D = row["D"]
+            answer = row["Answer"]
+            explanation = row["Explanation"]
+            difficulty_score = row["Difficulty"]
+            lang = row["Language"]
+            if not (
+                A
+                or B
+                or C
+                or D
+                or answer
+                or question
+                or topic
+                or explanation
+                or difficulty_score
+            ):
+                continue
+
+            topic_names = row["Topics"]
+            topic_names_list = topic_names.split("+")
+            topics = []
+            for topic_name in topic_names_list:
+                if not Topic.objects.filter(name=topic_name).exists():
+                    topic = Topic(name=topic_name)
+                    topic.save()
+                topic = Topic.objects.get(name=topic_name)
+                topic.question_count += 1
+                topics.append(topic)
+            new_question = Question(
+                setter=request.user.appuser,
+                question=question,
+                A=A,
+                B=B,
+                C=C,
+                D=D,
+                answer=answer,
+                difficulty_score=difficulty_score,
+                explanation=explanation,
+                lang=lang,
+            )
+            new_question.save()
+            for topic in topics:
+                new_question.topics.add(topic)
             new_question.save()
             saved_count += 1
 
@@ -593,8 +678,10 @@ class QuestionBankGeneratorAPI(generics.GenericAPIView):
         hard = request.GET.get("hard").split("+")[0].split(" ")
         format = request.GET.get("type")
         topics = Topic.objects.all().filter(name__in=topic_names)
-        questions_queryset = Question.objects.all().filter(
-            topics__in=topics, is_accepted=True
+        questions_queryset = (
+            Question.objects.all()
+            .filter(topics__in=topics, is_accepted=True)
+            .order_by("setter")
         )
         questions = []
         for i in range(len(topic_names)):
@@ -666,12 +753,14 @@ class QuestionBankGeneratorAPI(generics.GenericAPIView):
         format = request.GET.get("type")
         # topic = {"easy": 0, "medium": 0, "hard": 0, "tags": []}
         questions = []
+        print(topic_specs)
         for topic in topic_specs:
             easy = topic["easy"]
             medium = topic["medium"]
             hard = topic["hard"]
             topics = topic["tags"]
             topics_queryset = Topic.objects.all().filter(name__in=topics)
+            print(topic)
             question_queryset = Question.objects.all()
             for topic_object in topics_queryset:
                 question_queryset = question_queryset.filter(topics__in=[topic_object])
@@ -777,3 +866,10 @@ class TranslateAPI(generics.GenericAPIView):
         translated = translate_question(question.question)
 
         return Response(data={"translated:": translated, "original": question.question})
+
+
+class AutoCompleteAPI(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        query = request.GET.get("query")
+        questions = Question.objects.all().filter(question__istartswith=query).values()
+        return Response(data={"data": questions}, status=201)

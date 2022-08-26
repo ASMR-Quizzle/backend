@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from question.views import ReviewedQuestionsAPI, TranslateQuestionAPI
+from question.views import ReviewedQuestionsAPI, TranslateQuestionAPI, AutoCompleteAPI
 
 from .views import (
     CSVTestQuestions,
@@ -14,6 +14,7 @@ from .views import (
     UserEligibilityTestAPI,
     UserEligibilityTestTrackerAPI,
     TranslateAPI,
+    CheckDeDup,
 )
 
 router = routers.SimpleRouter()
@@ -26,6 +27,7 @@ urlpatterns = [
     path(
         "uet/tracker", UserEligibilityTestTrackerAPI.as_view(), name="start uet tracker"
     ),
+    path("dedup", CheckDeDup.as_view(), name="check_dedup"),
     path("review", ReviewQuestionAPI.as_view(), name="review questions"),
     path("topics", TopicsAPI.as_view(), name="all topics"),
     path("bulk/async", UploadCSVAsync.as_view(), name="bulk upload async"),
@@ -34,5 +36,6 @@ urlpatterns = [
     path("bank", QuestionBankGeneratorAPI.as_view(), name="question bank"),
     path("predict", MLModelPredictionAPI.as_view(), name="ml model prediction"),
     path("translate/<int:pk>", TranslateAPI.as_view(), name="translate"),
+    path("autocomplete", AutoCompleteAPI.as_view(), name="autocomplete"),
     path("", include(router.urls)),
 ]
