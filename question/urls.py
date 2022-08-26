@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from question.views import ReviewedQuestionsAPI
+from question.views import ReviewedQuestionsAPI, TranslateQuestionAPI
 
 from .views import (
     CSVTestQuestions,
@@ -13,10 +13,12 @@ from .views import (
     UploadCSVAsync,
     UserEligibilityTestAPI,
     UserEligibilityTestTrackerAPI,
+    TranslateAPI,
 )
 
 router = routers.SimpleRouter()
 router.register(r"reviewer", ReviewedQuestionsAPI)
+router.register(r"translate", TranslateQuestionAPI)
 
 urlpatterns = [
     path("set", SetQuestionAPI.as_view(), name="set question"),
@@ -31,5 +33,6 @@ urlpatterns = [
     path("test", CSVTestQuestions.as_view(), name="test questions"),
     path("bank", QuestionBankGeneratorAPI.as_view(), name="question bank"),
     path("predict", MLModelPredictionAPI.as_view(), name="ml model prediction"),
+    path("translate/<int:pk>", TranslateAPI.as_view(), name="translate"),
     path("", include(router.urls)),
 ]
