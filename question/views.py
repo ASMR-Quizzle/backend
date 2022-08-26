@@ -1,7 +1,8 @@
 import datetime
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics
+from rest_framework import generics, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
@@ -63,23 +64,23 @@ class SetQuestionAPI(generics.GenericAPIView):
         topics_queryset = []
         for topic in topics:
             if not Topic.objects.filter(name=topic).exists():
-                return Response(
-                    status=404,
-                    data={"error": f"Topic '{request.data['topic']}' does not exist"},
-                )
-            else:
-                topics_queryset.append(Topic.objects.get(name=topic))
-        for topic in topics_queryset:
-            uet = UserEligibilityTest.objects.all().filter(
-                topic=topic, appuser=appUser, test_type="SETTER", is_eligible=True
-            )
-            if len(uet) == 0:
-                return Response(
-                    status=400,
-                    data={
-                        "error": f"user not eligible to set questions for topic: {topic.name}"
-                    },
-                )
+                # return Response(
+                #     status=404,
+                #     data={"error": f"Topic '{request.data['topic']}' does not exist"},
+                # )
+                Topic.objects.create(name=topic)
+            topics_queryset.append(Topic.objects.get(name=topic))
+        # for topic in topics_queryset:
+        #     uet = UserEligibilityTest.objects.all().filter(
+        #         topic=topic, appuser=appUser, test_type="SETTER", is_eligible=True
+        #     )
+        #     if len(uet) == 0:
+        #         return Response(
+        #             status=400,
+        #             data={
+        #                 "error": f"user not eligible to set questions for topic: {topic.name}"
+        #             },
+        #         )
 
         content = request.data["question"]
         A = request.data["A"]
@@ -178,6 +179,25 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
         )
 
 
+class ReviewedQuestionsAPI(viewsets.ModelViewSet):
+    queryset = Question.objects.all()
+    serializer_class = SetQuestionSerializer
+    permission_classes = (IsAuthenticated,)
+
+    @action(detail=False, methods=["get"], url_name="list", url_path="list")
+    def list_reviewed_questions(self, request, *args, **kwargs):
+        # try:
+        user = request.user
+        appUser = user.appuser
+        reviewed_questions = (
+            self.queryset.include(reviewers__in=[appUser]).distinct().values()
+        )
+        return Response(data=reviewed_questions, status=200)
+
+    # except:
+    #     return Response({"message": "Server Error occured"}, status=500)
+
+
 class ReviewQuestionAPI(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = ReviewQuestionSerializer
@@ -187,12 +207,12 @@ class ReviewQuestionAPI(generics.GenericAPIView):
         appUser = user.appuser
         if appUser.is_reviewer == False:
             return Response(status=400, data={"error": "user not a question reviewer"})
-        uet_eligible = UserEligibilityTest.objects.filter(
-            appuser=appUser, test_type="REVIEWER", is_eligible=True
-        ).values()
-        topic_list = []
-        for i in range(len(uet_eligible)):
-            topic_list.append(Topic.objects.get(pk=uet_eligible[i]["topic_id"]))
+        # uet_eligible = UserEligibilityTest.objects.filter(
+        #     appuser=appUser, test_type="REVIEWER", is_eligible=True
+        # ).values()
+        topic_list = Topic.objects.all()
+        # for i in range(len(uet_eligible)):
+        #     topic_list.append(Topic.objects.get(pk=uet_eligible[i]["topic_id"]))
 
         # temporary arrangement
         questions_queryset = (
@@ -202,6 +222,7 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             .exclude(reviews=3)
             .filter(is_accepted=False)
             .filter(topics__in=topic_list)
+            .distinct()
         )
         questions = questions_queryset.values()
 
@@ -231,17 +252,17 @@ class ReviewQuestionAPI(generics.GenericAPIView):
                     data={"error": "user has already reviewed this question"},
                     status=400,
                 )
-        topics = question.topics.all()
-        for topic in topics:
-            if not UserEligibilityTest.objects.filter(
-                topic__in=topics,
-                appuser=appUser,
-                test_type="REVIEWER",
-            ).exists():
-                return Response(
-                    status=400,
-                    data={"error": "User not eligible to review this question"},
-                )
+        # topics = question.topics.all()
+        # for topic in topics:
+        #     if not UserEligibilityTest.objects.filter(
+        #         topic__in=topics,
+        #         appuser=appUser,
+        #         test_type="REVIEWER",
+        #     ).exists():
+        #         return Response(
+        #             status=400,
+        #             data={"error": "User not eligible to review this question"},
+        #         )
         question.status = "UNDER REVIEW"
         if question.reviews >= 3:
             return Response(
@@ -256,13 +277,14 @@ class ReviewQuestionAPI(generics.GenericAPIView):
             acceptance_score = request.data["acceptance_score"]
 
         difficulty_score = (
-            question.difficulty_score + request.data["difficulty_score"]
+            question.difficulty_score + float(request.data["difficulty_score"])
         ) / 2
         question.difficulty_score = difficulty_score
         question.acceptance_score = acceptance_score
-        question.topic = topic
         question.reviewers.add(appUser)
         question.reviews += 1
+        if len(request.data["reviewer_notes"]) > len(question.reviewer_notes):
+            question.reviewer_notes = request.data["reviewer_notes"]
         reviewer_list = []
         if question.reviews == 3:
             question.is_accepted = acceptance_score >= 35
@@ -563,6 +585,81 @@ class QuestionBankGeneratorAPI(generics.GenericAPIView):
             questions += sub_query_easy
             questions += sub_query_medium
             questions += sub_query_hard
+
+        if format == "csv":
+            df = pd.DataFrame(
+                columns=[
+                    "Question",
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                    "Answer",
+                    "Explanation",
+                    "Difficulty",
+                ]
+            )
+            for question in questions:
+                print(question)
+                df.loc[len(df.index)] = [
+                    question["question"],
+                    question["A"],
+                    question["B"],
+                    question["C"],
+                    question["D"],
+                    question["answer"],
+                    question["explanation"],
+                    question["difficulty_score"],
+                ]
+            response = HttpResponse(content_type="text/csv")
+            response[
+                "Content-Disposition"
+            ] = f"attachment; filename=Quizzle_Questions.csv"
+            df.to_csv(
+                path_or_buf=response,
+                sep=";",
+                float_format="%.2f",
+                index=False,
+                decimal=",",
+            )
+            return response
+        return Response(data={"data": questions})
+
+    def post(self, request, *args, **kwargs):
+        topic_specs = request.data["topics"]
+        format = request.GET.get("type")
+        # topic = {"easy": 0, "medium": 0, "hard": 0, "tags": []}
+        questions = []
+        for topic in topic_specs:
+            easy = topic["easy"]
+            medium = topic["medium"]
+            hard = topic["hard"]
+            topics = topic["tags"]
+            topics_queryset = Topic.objects.all().filter(name__in=topics)
+            question_queryset = Question.objects.all()
+            for topic_object in topics_queryset:
+                question_queryset = question_queryset.filter(topics__in=[topic_object])
+            sub_query = question_queryset
+            sub_query_easy = list(
+                sub_query.filter(
+                    difficulty_score__gte=0, difficulty_score__lte=33
+                ).values()
+            )[:easy]
+            sub_query_medium = list(
+                sub_query.filter(
+                    difficulty_score__gte=34, difficulty_score__lte=66
+                ).values()
+            )[:medium]
+            sub_query_hard = list(
+                sub_query.filter(
+                    difficulty_score__gte=67, difficulty_score__lte=100
+                ).values()
+            )[:hard]
+            questions += sub_query_easy
+            questions += sub_query_medium
+            questions += sub_query_hard
+
+        # TODO: if lang not eng, translate to lang
 
         if format == "csv":
             df = pd.DataFrame(
