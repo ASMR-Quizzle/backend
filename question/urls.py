@@ -1,4 +1,6 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework import routers
+from question.views import ReviewedQuestionsAPI
 
 from .views import (
     CSVTestQuestions,
@@ -13,6 +15,8 @@ from .views import (
     UserEligibilityTestTrackerAPI,
 )
 
+router = routers.SimpleRouter()
+router.register(r"reviewer", ReviewedQuestionsAPI)
 
 urlpatterns = [
     path("set", SetQuestionAPI.as_view(), name="set question"),
@@ -27,4 +31,5 @@ urlpatterns = [
     path("test", CSVTestQuestions.as_view(), name="test questions"),
     path("bank", QuestionBankGeneratorAPI.as_view(), name="question bank"),
     path("predict", MLModelPredictionAPI.as_view(), name="ml model prediction"),
+    path("", include(router.urls)),
 ]

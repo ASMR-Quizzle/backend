@@ -49,6 +49,8 @@ class Question(models.Model):
         max_length=256, choices=STATUS_CHOICES, default="NOT REVIEWED"
     )
     explanation = models.CharField(default="N/A", max_length=10000)
+    reviewer_notes = models.TextField(default="")
+    lang = models.CharField(default="en", max_length=3)
 
     class Meta:
         verbose_name = "Question"
