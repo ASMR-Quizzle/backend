@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 import pandas as pd
 from drf_yasg.utils import swagger_auto_schema
+from question.utils import translate_question
 from question.tasks import ml_model_prediction_task, uploadCSVTask
 from user.models import AppUser
 import pytz
@@ -29,6 +30,8 @@ from .models import (
     UserEligibilityTest,
     UserEligibilityTestTracker,
 )
+
+from .utils import check_duplicate
 
 
 class SetQuestionAPI(generics.GenericAPIView):
@@ -101,6 +104,10 @@ class SetQuestionAPI(generics.GenericAPIView):
             difficulty_score=difficulty_score,
             explanation=explanation,
         )
+        if check_duplicate(question.question) == True:
+            return Response(
+                data={"message": "This question already exists"}, status=400
+            )
         question.save()
         for topic in topics_queryset:
             topic.question_count += 1
@@ -179,6 +186,28 @@ class UserEligibilityTestAPI(generics.GenericAPIView):
         )
 
 
+class TranslateQuestionAPI(viewsets.ModelViewSet):
+    queryset = Question.objects.all()
+    serializer_class = SetQuestionSerializer
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="translate_question",
+        url_path="translate_question",
+    )
+    def translate_question(self, request, pk=None, *args, **kwargs):
+        # try:
+        question = self.queryset.get(pk=pk).values()
+        print(question)
+        new_question = translate_question(question, "en", "hi")
+        print(new_question)
+        return Response(data={"question": new_question}, status=200)
+
+    # except:
+    #     return Response(data={"message": "Server Error occured"}, status=500)
+
+
 class ReviewedQuestionsAPI(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = SetQuestionSerializer
@@ -189,9 +218,16 @@ class ReviewedQuestionsAPI(viewsets.ModelViewSet):
         # try:
         user = request.user
         appUser = user.appuser
-        reviewed_questions = (
-            self.queryset.include(reviewers__in=[appUser]).distinct().values()
+        # reviewed_questions_queryset = self.queryset.include(reviewers__in=[appUser])
+        reviewed_questions_queryset = (
+            Question.objects.all()
+            .exclude(setter=appUser)
+            .filter(reviewers__in=[appUser])
         )
+        reviewed_questions = reviewed_questions_queryset.values()
+        for i, question in enumerate(reviewed_questions_queryset):
+            topics = question.topics.all().values()
+            reviewed_questions[i]["topics"] = topics
         return Response(data=reviewed_questions, status=200)
 
     # except:
@@ -733,3 +769,11 @@ class MLModelPredictionAPI(generics.GenericAPIView):
         result = loaded_model.predict(["What is the point of life?"])
         topics = ["Physics", "Chemistry", "Maths", "Biology"]
         return Response(data={"topic": topics[result[0][0]]})
+
+
+class TranslateAPI(generics.GenericAPIView):
+    def get(self, request, pk=None, *args, **kwargs):
+        question = Question.objects.all().get(pk=pk)
+        translated = translate_question(question.question)
+
+        return Response(data={"translated:": translated, "original": question.question})
